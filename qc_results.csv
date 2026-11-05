@@ -1,4 +1,0 @@
-File,Peak,RMS,Floor,Verdict
-Austin.wav,0.07,0.01,0.0007,FLAG: too quiet
-loud_test.wav,1.0,0.19,0.0142,"FLAG: clipping, noisy"
-reconstructed.wav,0.07,0.01,0.0007,FLAG: too quiet
