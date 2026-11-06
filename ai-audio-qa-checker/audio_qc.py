@@ -3,9 +3,17 @@ import numpy as np
 import soundfile as sf
 import csv
 import pyloudnorm as pyln
+from scipy.signal import butter, sosfilt
 
 
 folder = "."
+
+def measure_noise_floor(audio, sr, cutoff=400):
+    sos = butter(4, cutoff, btype="highpass", fs=sr, output="sos")
+    filtered = sosfilt(sos, audio)
+    chunk = int(sr * 0.1)
+    rms_values = [np.sqrt(np.mean(filtered[i:i + chunk] ** 2)) for i in range(0, len(filtered) - chunk + 1, chunk)]
+    return float(np.percentile(rms_values, 10))
 
 # QA Checker
 rows = []
@@ -17,21 +25,16 @@ for name in os.listdir(folder):
         peak = np.max(np.abs(audio))
         rms = np.sqrt(np.mean(audio ** 2))
 
-        chunk = int(sr * 0.1)
-        levels = []
-        for start in range(0, len(audio), chunk):
-            piece = audio[start:start + chunk]
-            levels.append(np.sqrt(np.mean(piece ** 2)))
-        noise_floor = np.percentile(levels, 10)
+        noise_floor = measure_noise_floor(audio, sr)
 
         flags = []
         if peak >= 0.99:
             flags.append("clipping")
-        if loudness < -18:
+        if loudness < -19:
             flags.append("too quiet")
         if loudness > -14:
             flags.append("too loud")
-        if noise_floor > 0.01:
+        if noise_floor > 0.007:
             flags.append("noisy")
 
         verdict = "PASS" if not flags else "FLAG: " + ", ".join(flags)
